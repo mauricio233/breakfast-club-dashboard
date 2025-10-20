@@ -1,0 +1,24 @@
+{
+  "summary": {
+    "childrenMonday": 25,
+    "childrenTuesday": 30,
+    "cheapestSupermarket": "Pak'nSave",
+    "estimatedTotalCost": 120.5
+  },
+  "products": [
+    { "name": "Milk 2L", "quantity": "5 bottles" },
+    { "name": "Bread Loaf", "quantity": "10 units" },
+    { "name": "Cereal Pack", "quantity": "3 boxes" },
+    { "name": "Bananas", "quantity": "6 kg" },
+    { "name": "Butter", "quantity": "2 packs" },
+    { "name": "Cheese Slices", "quantity": "4 packs" },
+    { "name": "Yogurt 1kg", "quantity": "2 tubs" },
+    { "name": "Apples", "quantity": "5 kg" },
+    { "name": "Oats", "quantity": "2 bags" },
+    { "name": "Juice 2L", "quantity": "3 bottles" }
+  ],
+  "calories": {
+    "optimal": 2000,
+    "real": 1850
+  }
+}
