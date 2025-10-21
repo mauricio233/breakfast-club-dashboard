@@ -48,36 +48,29 @@ export default function SummaryCards() {
       ? "Countdown"
       : "New World";
 
-  // ✅ Total children both days
   const totalChildren = mon + tue;
-
-  // 🔥 Calories
   const kcalPerChild = 450;
   const optimalCalories = kcalPerChild * totalChildren;
 
   // 🧮 Items base
   const mergedItems = {};
+  mergedItems["milk"] = totalChildren * 0.3;
+  mergedItems["fruit"] = totalChildren * 1;
+  mergedItems["yogurt"] = totalChildren * 0.1;
+  mergedItems["oats"] = totalChildren * 0.1;
+  mergedItems["bread"] = totalChildren * 1;
 
-  // 🧁 Shared items (both days)
-  mergedItems["milk"] = totalChildren * 0.3; // L
-  mergedItems["fruit"] = totalChildren * 1; // pieces
-  mergedItems["yogurt"] = totalChildren * 0.1; // kg
-  mergedItems["oats"] = totalChildren * 0.1; // kg
-  mergedItems["bread"] = totalChildren * 1; // ✅ units for both days
-
-  // 🧮 Milo and Sugar (shared)
   const milkLiters = mergedItems["milk"];
   const oatsKg = mergedItems["oats"];
-  mergedItems["milo"] = milkLiters * 50; // g
-  mergedItems["sugar"] = (milkLiters * 10 + oatsKg * 50) / 1000; // kg
+  mergedItems["milo"] = milkLiters * 50;
+  mergedItems["sugar"] = (milkLiters * 10 + oatsKg * 50) / 1000;
 
   // 🧇 Waffles ingredients (Tuesday only)
-  mergedItems["flour"] = (tue * 25) / 1000; // kg
-  mergedItems["eggs"] = Math.ceil(tue * 0.25); // units
-  mergedItems["butter"] = tue * 8; // g
-  mergedItems["baking_powder"] = tue * 5; // g
+  mergedItems["flour"] = (tue * 25) / 1000;
+  mergedItems["eggs"] = Math.ceil(tue * 0.25);
+  mergedItems["butter"] = tue * 8;
+  mergedItems["baking_powder"] = tue * 5;
 
-  // ✅ Units
   const units = {
     milk: "L",
     fruit: "pieces",
@@ -92,7 +85,6 @@ export default function SummaryCards() {
     baking_powder: "g",
   };
 
-  // 🧮 Leftovers input
   const handleLeftoverChange = (item, value) => {
     setLeftovers((prev) => ({ ...prev, [item]: Number(value) || 0 }));
   };
@@ -167,7 +159,46 @@ export default function SummaryCards() {
         </div>
       </div>
 
-      {/* Product List */}
+      {/* 🏪 Supermarket Comparison */}
+      <div className="bg-white rounded-2xl shadow-md p-6">
+        <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
+          🏪 Supermarket Comparison
+        </h3>
+        <div className="grid md:grid-cols-3 gap-4 text-center">
+          {Object.entries(normalizedTotals).map(([key, value]) => (
+            <div
+              key={key}
+              className={`rounded-xl p-4 border ${
+                key === cheapest
+                  ? "border-yellow-400 bg-yellow-50"
+                  : "border-gray-200"
+              }`}
+            >
+              <h4
+                className={`font-semibold text-lg ${
+                  key === "paknsave"
+                    ? "text-yellow-600"
+                    : key === "countdown"
+                    ? "text-green-700"
+                    : "text-red-700"
+                }`}
+              >
+                {key === "paknsave"
+                  ? "Pak’nSave"
+                  : key === "countdown"
+                  ? "Countdown"
+                  : "New World"}
+              </h4>
+              <p className="text-xl font-bold">${value.toFixed(2)}</p>
+              {key === cheapest && (
+                <p className="text-yellow-600 text-sm mt-1">✅ Cheapest Option</p>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 🧾 Product List + Leftovers */}
       <div className="bg-white rounded-2xl shadow-md p-6">
         <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
           🧾 Product List ({data.mode === "fallback" ? "Demo" : "Live"}) & Leftovers
@@ -206,7 +237,7 @@ export default function SummaryCards() {
         </div>
       </div>
 
-      {/* Calories */}
+      {/* 🍎 Calories Overview */}
       <div className="bg-white rounded-2xl shadow-md p-6">
         <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
           🍎 Calories Overview
