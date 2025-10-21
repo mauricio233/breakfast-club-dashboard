@@ -29,6 +29,7 @@ export default function SummaryCards() {
     );
   }
 
+  // --- Normalize totals ---
   const totals = data.totals || {};
   const normalizedTotals = {
     paknsave: totals["Pak'nSave"] ?? totals.paknsave ?? 0,
@@ -48,47 +49,51 @@ export default function SummaryCards() {
       ? "Countdown"
       : "New World";
 
+  // 🔥 Dynamic calories based on attendance
+  const kcalPerChild = 450; // NZ Ministry of Health guideline
   const totalChildren = mon + tue;
-  const kcalPerChild = 450;
   const optimalCalories = kcalPerChild * totalChildren;
 
-  // 🧮 Items base
+  // --- Merge monday_items + tuesday_items ---
   const mergedItems = {};
-  mergedItems["milk"] = totalChildren * 0.3;
-  mergedItems["fruit"] = totalChildren * 1;
-  mergedItems["yogurt"] = totalChildren * 0.1;
-  mergedItems["oats"] = totalChildren * 0.1;
-  mergedItems["bread"] = totalChildren * 1;
+  const monday = data.monday_items || {};
+  const tuesday = data.tuesday_items || {};
 
-  const milkLiters = mergedItems["milk"];
-  const oatsKg = mergedItems["oats"];
-  mergedItems["milo"] = milkLiters * 50;
-  mergedItems["sugar"] = (milkLiters * 10 + oatsKg * 50) / 1000;
+  for (const [key, val] of Object.entries(monday)) {
+    const clean = key.trim().toLowerCase();
+    mergedItems[clean] = (mergedItems[clean] || 0) + Number(val);
+  }
+  for (const [key, val] of Object.entries(tuesday)) {
+    const clean = key.trim().toLowerCase();
+    mergedItems[clean] = (mergedItems[clean] || 0) + Number(val);
+  }
 
-  // 🧇 Waffles ingredients (Tuesday only)
-  mergedItems["flour"] = (tue * 25) / 1000;
-  mergedItems["eggs"] = Math.ceil(tue * 0.25);
-  mergedItems["butter"] = tue * 8;
-  mergedItems["baking_powder"] = tue * 5;
+  if (mergedItems["four"] && !mergedItems["flour"]) {
+    mergedItems["flour"] = mergedItems["four"];
+    delete mergedItems["four"];
+  }
 
+  // ✅ Units mapping
   const units = {
     milk: "L",
-    fruit: "pieces",
-    yogurt: "kg",
-    oats: "kg",
     bread: "units",
-    milo: "g",
-    sugar: "kg",
+    fruit: "pieces",
+    oats: "kg",
+    yogurt: "kg",
     flour: "kg",
     eggs: "eggs",
+    sugar: "kg",
     butter: "g",
-    baking_powder: "g",
+    milo: "g",
+    baking_powder: "g", // grams now
   };
 
+  // 🧮 Handle leftover input
   const handleLeftoverChange = (item, value) => {
     setLeftovers((prev) => ({ ...prev, [item]: Number(value) || 0 }));
   };
 
+  // 🧮 Calculate calories “consumed” based on leftovers
   const totalLeftoverRatio =
     Object.entries(leftovers).reduce((sum, [item, val]) => {
       const planned = mergedItems[item] || 0;
@@ -106,6 +111,7 @@ export default function SummaryCards() {
 
   return (
     <section className="p-6 space-y-8">
+      {/* Mode indicator */}
       {data.mode === "fallback" ? (
         <div className="bg-amber-100 text-amber-700 p-2 rounded text-center text-sm font-medium">
           ⚠️ Using demo data — live supermarket API unavailable
@@ -159,85 +165,54 @@ export default function SummaryCards() {
         </div>
       </div>
 
-      {/* 🏪 Supermarket Comparison */}
+      {/* ✅ Product List + Leftovers + To Buy */}
       <div className="bg-white rounded-2xl shadow-md p-6">
         <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
-          🏪 Supermarket Comparison
-        </h3>
-        <div className="grid md:grid-cols-3 gap-4 text-center">
-          {Object.entries(normalizedTotals).map(([key, value]) => (
-            <div
-              key={key}
-              className={`rounded-xl p-4 border ${
-                key === cheapest
-                  ? "border-yellow-400 bg-yellow-50"
-                  : "border-gray-200"
-              }`}
-            >
-              <h4
-                className={`font-semibold text-lg ${
-                  key === "paknsave"
-                    ? "text-yellow-600"
-                    : key === "countdown"
-                    ? "text-green-700"
-                    : "text-red-700"
-                }`}
-              >
-                {key === "paknsave"
-                  ? "Pak’nSave"
-                  : key === "countdown"
-                  ? "Countdown"
-                  : "New World"}
-              </h4>
-              <p className="text-xl font-bold">${value.toFixed(2)}</p>
-              {key === cheapest && (
-                <p className="text-yellow-600 text-sm mt-1">✅ Cheapest Option</p>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 🧾 Product List + Leftovers */}
-      <div className="bg-white rounded-2xl shadow-md p-6">
-        <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
-          🧾 Product List ({data.mode === "fallback" ? "Demo" : "Live"}) & Leftovers
+          🧾 Product List ({data.mode === "fallback" ? "Demo" : "Live"}) — Needed, Leftover & To Buy
         </h3>
 
-        <div className="grid md:grid-cols-2 gap-4">
-          {Object.entries(mergedItems).map(([item, qty], i) => {
-            const unit = units[item] || "";
-            const displayQty =
-              item === "eggs" || item === "bread"
-                ? Math.round(qty)
-                : Math.round(qty * 100) / 100;
+        {Object.keys(mergedItems).length > 0 ? (
+          <div className="grid md:grid-cols-2 gap-4">
+            {Object.entries(mergedItems).map(([item, qty], i) => {
+              const unit = units[item] || "";
+              const roundedQty = Math.round(qty * 100) / 100;
+              const leftover = leftovers[item] || 0;
+              const toBuy = Math.max(roundedQty - leftover, 0);
 
-            return (
-              <div
-                key={i}
-                className="flex justify-between items-center bg-amber-50 p-3 rounded-lg text-sm text-gray-800"
-              >
-                <div>
-                  <strong>{item}</strong> — {displayQty} {unit}
+              return (
+                <div
+                  key={i}
+                  className="flex justify-between items-center bg-amber-50 p-3 rounded-lg text-sm text-gray-800"
+                >
+                  <div>
+                    <strong>{item}</strong> — {roundedQty} {unit}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="text-gray-600 text-xs">Leftover:</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={leftover}
+                      onChange={(e) =>
+                        handleLeftoverChange(item, e.target.value)
+                      }
+                      className="w-16 text-center border rounded-md p-1 text-xs"
+                    />
+                    <div className="bg-green-50 px-2 py-1 rounded text-xs font-semibold text-green-700">
+                      To Buy: {toBuy} {unit}
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <label className="text-gray-600 text-xs">Leftover:</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    value={leftovers[item] || ""}
-                    onChange={(e) => handleLeftoverChange(item, e.target.value)}
-                    className="w-16 text-center border rounded-md p-1 text-xs"
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-gray-500 italic">No products available.</p>
+        )}
       </div>
 
-      {/* 🍎 Calories Overview */}
+      {/* Calories Overview */}
       <div className="bg-white rounded-2xl shadow-md p-6">
         <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
           🍎 Calories Overview
